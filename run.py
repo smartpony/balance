@@ -2,6 +2,7 @@
 from datetime import datetime
 from calendar import monthrange
 import re
+import urllib2
 
 
 # Окно из Меню -> Параметры
@@ -98,11 +99,16 @@ class ParamWindow(Toplevel):
 
 # Функция получения баланса и расчёт оставшихся дней
 def get_balance():
+    # Считать конфиг
     config = read_config()
-    label_balance_value['text'] = config['money'] + ' RUB'
+    # Забрать счёт с сервера
+    #goodnet_xml = urllib2.urlopen(config['url']).read()
+    money = 500.25
+    # Выдать результат
+    label_balance_value['text'] = str(money) + ' RUB'
     now = datetime.now()
     month_days = monthrange(now.year, now.month)[1]
-    label_days_value['text'] = int(float(config['money'])//(config['month_pay']/month_days))
+    label_days_value['text'] = int(money//(config['month_pay']/month_days))
 
 
 # Открыть окно настроек
@@ -120,22 +126,19 @@ def read_config():
             PIN2 = line[5:].rstrip()
         elif line[:8] == 'Interval':
             INTERVAL = line[9:].rstrip()
-        elif line[:5] == 'Money':
-            MONEY = line[6:].rstrip()
         elif line[:8] == 'MonthPay':
             MONTH_PAY = int(line[9:].rstrip())
+        elif line[:6] == 'Server':
+            URL = line[7:].rstrip()
     config_file.close()
-    if PIN1 and PIN2 and INTERVAL and MONEY and MONTH_PAY:
-        return({'pin1':PIN1,
-            'pin2':PIN2,
-            'interval':INTERVAL,
-            'money':MONEY,
-            'month_pay':MONTH_PAY})
+    if PIN1 and PIN2 and INTERVAL and MONTH_PAY and URL:
+        return({'pin1': PIN1,
+            'pin2': PIN2,
+            'interval': INTERVAL,
+            'month_pay': MONTH_PAY,
+            'url': URL})
 
 
-# Забрать XML с сервера с авторизацией по PIN1 и PIN2
-def get_xml(url, pin1, pin2):
-    pass
 
 
 # Окно с заголовком и минимальным размером
