@@ -1,11 +1,13 @@
 ﻿from Tkinter import *
 from datetime import datetime
 from calendar import monthrange
-import re
-import urllib2
+import re, requests
+import xml.etree.ElementTree as ET
 
 
-# Окно из Меню -> Параметры
+# --- ОКНА --------------------------------------
+
+# Меню > Параметры
 class ParamWindow(Toplevel):
     # Функция сохранения параметров в конфиг-файл
     def save_to_config(self):
@@ -97,12 +99,31 @@ class ParamWindow(Toplevel):
             sticky=W)
 
 
+# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ -------------------
+
 # Функция получения баланса и расчёт оставшихся дней
 def get_balance():
     # Считать конфиг
     config = read_config()
     # Забрать счёт с сервера
-    #goodnet_xml = urllib2.urlopen(config['url']).read()
+    #page = requests.get(config['url'])
+    page = requests.get('http://10.52.201.2/')
+    # Получить баланс при удачном коннекте
+    if page.status_code == 200:
+        label_connect_value['text'] = 'OK'
+        # Пример
+        #for line in page.text.split('\n'):
+        #    if line[:7] == '<title>':
+        #        print(line)
+        # Пример парсинга XML
+        #xml_root = ET.fromstring(var)
+        #for xml_child in xml_root:
+        #    print(xml_child.tag, xml_child.attrib)
+        #print(xml_root[0][1].text)
+        # http://docs.python.org/2/library/xml.etree.elementtree.html#module-xml.etree.ElementTree
+    # Выдать ошибку, если сервер недоступен
+    else:
+        label_connect_value['text'] = 'error'
     money = 500.25
     # Выдать результат
     label_balance_value['text'] = str(money) + ' RUB'
@@ -139,14 +160,13 @@ def read_config():
             'url': URL})
 
 
-
+# --- ГЛАВНОЕ ОКНО ------------------------------
 
 # Окно с заголовком и минимальным размером
 root = Tk()
 root.title('Goodnet')
-root.geometry('280x120+1500+700')
+root.geometry('280x145+1500+700')
 root.resizable(0, 0)
-
 
 # Меню вверху окна
 top_menu = Menu()
@@ -171,7 +191,8 @@ label_balance.grid(row=0,
     pady=(10, 3),
     sticky=W)
 label_balance_value = Label(root,
-    text='120.35 RUB',
+    # Без пробелов почему-то кнопка update съезжает влево
+    text='          ',
     font=('Courier New', '12'))
 label_balance_value.grid(row=0,
     column=1,
@@ -186,16 +207,34 @@ label_days = Label(root,
     font=('Courier New', '12'))
 label_days.grid(row=1,
     padx=20,
-    pady=(0,10),
+    pady=(0,3),
     column=0,
     sticky=W)
 label_days_value = Label(root,
-    text='10',
+    text='',
     font=('Courier New', '12'))
 label_days_value.grid(row=1,
     padx=5,
-    pady=(0,10),
+    pady=(0,3),
     column=1,
+    sticky=W)
+
+# Статус связи
+label_connect = Label(root,
+    text='connect:',
+    font=('Courier New', '12'))
+label_connect.grid(row=2,
+    column=0,
+    padx=20,
+    pady=(0,10),
+    sticky=W)
+label_connect_value = Label(root,
+    text='',
+    font=('Courier New', '12'))
+label_connect_value.grid(row=2,
+    column=1,
+    padx=5,
+    pady=(0,10),
     sticky=W)
 
 # Кнопка обновления баланса с сервера
@@ -205,12 +244,12 @@ button_get = Button(root,
     text='update',
     font=('Courier New', '10'),
     command=get_balance)
-button_get.grid(row=2,
+button_get.grid(row=3,
     padx=(20,0),
     pady=5,
     columnspan=2)
 
 
-# Поехали
-get_balance()
+# --- ЗАПУСК ВСЕГО ------------------------------
+
 root.mainloop()
