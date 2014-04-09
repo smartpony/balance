@@ -1,7 +1,7 @@
 ﻿from Tkinter import *
 from datetime import datetime
 from calendar import monthrange
-import re, requests
+import re#, requests
 import xml.etree.ElementTree as ET
 
 
@@ -107,7 +107,7 @@ def get_balance():
     config = read_config()
     # Забрать счёт с сервера
     #page = requests.get(config['url'])
-    page = requests.get('http://10.52.201.2/')
+    page = 'xxx'#requests.get('http://10.52.201.2/')
     # Получить баланс при удачном коннекте
     if page.status_code == 200:
         label_connect_value['text'] = 'OK'
