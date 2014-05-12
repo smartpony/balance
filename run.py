@@ -1,12 +1,12 @@
 ﻿from Tkinter import *
 from datetime import datetime
 from calendar import monthrange
-import re#, requests
+import re
+import urllib2
 import xml.etree.ElementTree as ET
 
 
 # --- ОКНА --------------------------------------
-
 # Меню > Параметры
 class ParamWindow(Toplevel):
     # Функция сохранения параметров в конфиг-файл
@@ -33,7 +33,7 @@ class ParamWindow(Toplevel):
 
         # Положение, размер и заголовок окна
         self.title('Parameters')
-        self.geometry('245x120+1500+700')
+        self.geometry('245x120')
         self.resizable(0, 0)
 
         # PIN1
@@ -100,42 +100,30 @@ class ParamWindow(Toplevel):
 
 
 # --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ -------------------
-
 # Функция получения баланса и расчёт оставшихся дней
 def get_balance():
     # Считать конфиг
     config = read_config()
     # Забрать счёт с сервера
-    #page = requests.get(config['url'])
-    page = 'xxx'#requests.get('http://10.52.201.2/')
-    # Получить баланс при удачном коннекте
-    if page.status_code == 200:
+    try:
+        page = urllib2.urlopen(config['url'])
         label_connect_value['text'] = 'OK'
-        # Пример
-        #for line in page.text.split('\n'):
-        #    if line[:7] == '<title>':
-        #        print(line)
-        # Пример парсинга XML
-        #xml_root = ET.fromstring(var)
-        #for xml_child in xml_root:
-        #    print(xml_child.tag, xml_child.attrib)
-        #print(xml_root[0][1].text)
-        # http://docs.python.org/2/library/xml.etree.elementtree.html#module-xml.etree.ElementTree
-    # Выдать ошибку, если сервер недоступен
-    else:
+        page = page.read()
+        # Распарсить XML
+        xml_root = ET.fromstring(page)
+        money = float(xml_root.attrib['summa'])
+    except:
         label_connect_value['text'] = 'error'
-    money = 500.25
+        money = 0
     # Выдать результат
     label_balance_value['text'] = str(money) + ' RUB'
     now = datetime.now()
     month_days = monthrange(now.year, now.month)[1]
     label_days_value['text'] = int(money//(config['month_pay']/month_days))
 
-
 # Открыть окно настроек
 def open_params():
     param_window = ParamWindow(root, read_config())
-
 
 # Считывание переменных из конфига
 def read_config():
@@ -150,7 +138,10 @@ def read_config():
         elif line[:8] == 'MonthPay':
             MONTH_PAY = int(line[9:].rstrip())
         elif line[:6] == 'Server':
-            URL = line[7:].rstrip()
+            URL = 'http://%s:8080/bgbilling/balance_sender?login=%s&pswd=%s&mid=3' % (
+                line[7:].rstrip(),
+                PIN1,
+                PIN2)
     config_file.close()
     if PIN1 and PIN2 and INTERVAL and MONTH_PAY and URL:
         return({'pin1': PIN1,
@@ -161,11 +152,10 @@ def read_config():
 
 
 # --- ГЛАВНОЕ ОКНО ------------------------------
-
 # Окно с заголовком и минимальным размером
 root = Tk()
 root.title('Goodnet')
-root.geometry('280x145+1500+700')
+root.geometry('280x145')
 root.resizable(0, 0)
 
 # Меню вверху окна
